@@ -19,6 +19,11 @@ disk.getDisk().then((data) => {
 });
 
 //or query by volumes
+disk.getDisk('C:', (err, data) => { });
+//or like this, because it just compare first letter in windows
+async () => {
+  let info = await disk.getDisk('D');
+}
 
 ```
 # Data Format
