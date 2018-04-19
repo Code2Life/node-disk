@@ -45,6 +45,7 @@ Disk information includes total and free size of disk currently. Plan to impleme
 - Support linux and macOS
 - Get more info about hardware
 - Refector by using nan(Native Abstractions for Node.js)
+- Add docs and mocha test cases
 
 # Licence & copyright
 Copyright (c) 2018 Code2Life
