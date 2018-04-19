@@ -4,8 +4,8 @@ Node-disk is a C++ addon node.js module for get physical disk information. Now i
 # Usage
 npm install node-disk --save
 
-```
-const disk = require('node-disk');  
+```js
+const disk = require('node-disk');  
 
 const info = disk.getDisk((err, data) => {
   //data is disk information
@@ -23,7 +23,7 @@ disk.getDisk().then((data) => {
 ```
 # Data Format
 Disk information includes total and free size of disk currently. Plan to implement other info in future.
-```
+```js
 {
   total: '1042.04 GB',
   free: '781.00 GB',
