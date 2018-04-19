@@ -1,7 +1,5 @@
-#include <diskInfo.h>
+#include "node_disk.h"
 
-using namespace std;
-
-namespace demo {
-
+bool DoGetDiskInfo(DISK_INFO &disk_in, std::string path) {
+	return true;
 }

@@ -9,58 +9,54 @@
 #include <unistd.h>
 #endif
 
-DiskInfo *disk = new DiskInfo();
+using namespace v8;
 
 struct async_req {
 	uv_work_t req;
-	int input;
-	int output;
-	v8::Isolate* isolate;
-	v8::Persistent<v8::Function> callback;
-	node::async_context context;
+	string input;
+	DISK_INFO* output;
+	Isolate* isolate;
+	Persistent<Function> callback;
 };
 
 void DoAsync(uv_work_t* r) {
-	//todo
-	DISK_INFO *info = new DISK_INFO();
-	disk->GetDiskInfo(*info);
-
 	async_req* req = reinterpret_cast<async_req*>(r->data);
-	// Simulate CPU intensive process...
-#if defined _WIN32
-	Sleep(1000);
-#else
-	sleep(1);
-#endif
-	req->output = req->input * 2;
+	DISK_INFO *info = new DISK_INFO();
+	bool success = DoGetDiskInfo(*info, req->input);
+	req->output = info;
 }
 
 void AfterAsync(uv_work_t* r) {
 	async_req* req = reinterpret_cast<async_req*>(r->data);
-	v8::Isolate* isolate = req->isolate;
-	v8::HandleScope scope(isolate);
+	Isolate* isolate = req->isolate;
+	HandleScope scope(isolate);
 
-	v8::Local<v8::Value> argv[2] = {
-		v8::Null(isolate),
-		v8::Integer::New(isolate, req->output)
-	};
-
-	v8::TryCatch try_catch(isolate);
-
-	v8::Local<v8::Object> global = isolate->GetCurrentContext()->Global();
-	v8::Local<v8::Function> callback =
-		v8::Local<v8::Function>::New(isolate, req->callback);
-
-
-	// 也可以直接调用: callback->Call(global, 2, argv);
+	Local<Object> result = Object::New(req->isolate);
 	
-	v8::Local<v8::Value> ret =
-		node::MakeCallback(isolate, global, callback, 2, argv, req->context)
-		.ToLocalChecked();
-	assert(!ret.IsEmpty());
+	DISK_INFO* info = req->output;
 
-	// cleanup
-	node::EmitAsyncDestroy(isolate, req->context);
+	int i = 0;
+	Local<Array> volumes = Array::New(req->isolate);
+	for (auto it = info->partition.begin(); it != info->partition.end(); it++) {
+		Local<Object> vol_detail = Object::New(req->isolate);
+		vol_detail->Set(String::NewFromUtf8(req->isolate, "name"), String::NewFromUtf8(req->isolate, it->volume.c_str()));
+		vol_detail->Set(String::NewFromUtf8(req->isolate, "total"), String::NewFromUtf8(req->isolate, it->totalSize.c_str()));
+		vol_detail->Set(String::NewFromUtf8(req->isolate, "free"), String::NewFromUtf8(req->isolate, it->freeSize.c_str()));
+		volumes->Set(i++, vol_detail);
+	}
+
+	result->Set(String::NewFromUtf8(req->isolate, "total"), String::NewFromUtf8(req->isolate, info->totalSize.c_str()));
+	result->Set(String::NewFromUtf8(req->isolate, "free"), String::NewFromUtf8(req->isolate, info->freeSize.c_str()));
+	result->Set(String::NewFromUtf8(req->isolate, "volumes"), volumes);
+	
+	Local<Value> argv[2] = { Null(isolate), result };
+
+	TryCatch try_catch(isolate);
+
+	Local<Object> global = isolate->GetCurrentContext()->Global();
+	Local<Function> callback = Local<Function>::New(isolate, req->callback);
+
+	callback->Call(global, 2, argv);
 	req->callback.Reset();
 	delete req;
 
@@ -69,27 +65,32 @@ void AfterAsync(uv_work_t* r) {
 	}
 }
 
-void GetDiskInfo(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	v8::Isolate* isolate = args.GetIsolate();
+void GetDiskInfo(const FunctionCallbackInfo<Value>& args) {
+	Isolate* isolate = args.GetIsolate();
 
 	async_req* req = new async_req;
 	req->req.data = req;
 
-	req->input = args[0]->IntegerValue();
-	req->output = 0;
-	req->isolate = isolate;
-	req->context = node::EmitAsyncInit(isolate, v8::Object::New(isolate), "test");
+	if (args.Length() != 2 || !args[0]->IsString() || !args[1]->IsFunction()) {
+		node::ErrnoException(isolate, NULL, "Parameter error", NULL);
+		return;
+	}
 
-	v8::Local<v8::Function> callback = v8::Local<v8::Function>::Cast(args[1]);
+	String::Utf8Value param(args[0]->ToString());
+	req->input = std::string(*param);
+	req->isolate = isolate;
+
+	Local<Function> callback = Local<Function>::Cast(args[1]);
 	req->callback.Reset(isolate, callback);
 
 	uv_queue_work(uv_default_loop(),
 		&req->req,
 		DoAsync,
 		(uv_after_work_cb)AfterAsync);
+	args.GetReturnValue().Set(Boolean::New(isolate, true));
 }
 
-void init(v8::Local<v8::Object> exports) {
+void init(Local<Object> exports) {
 	NODE_SET_METHOD(exports, "getDiskInfo", GetDiskInfo);
 }
 

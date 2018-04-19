@@ -1,6 +1,5 @@
 #pragma once
-
-#include <stdio.h>
+#include <stdint.h>
 #include <vector>
 
 using namespace std;
@@ -14,14 +13,7 @@ typedef struct _PARTITION_INFO{
 typedef struct _DISK_INFO{
 	string totalSize;
 	string freeSize;
-	vector<PARTITION> partion;
+	vector<PARTITION> partition;
 } DISK_INFO, *PDISK_INFO;
 
-class DiskInfo {
-
-public:
-	DiskInfo();
-	~DiskInfo();
-	void GetDiskInfo(DISK_INFO &disk);
-
-};
+bool DoGetDiskInfo(DISK_INFO &disk, string path);

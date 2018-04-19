@@ -21,15 +21,7 @@ string DoubleToString(double num)
 	return str;
 }
 
-DiskInfo::DiskInfo(){
-
-}
-
-DiskInfo::~DiskInfo(){
-
-}
-
-void DiskInfo::GetDiskInfo(DISK_INFO &disk_in) {
+bool DoGetDiskInfo(DISK_INFO &disk_in, std::string path) {
 	DWORD disk_count = 0;
 	DWORD disk_info = GetLogicalDrives();
 	while (disk_info)
@@ -47,6 +39,11 @@ void DiskInfo::GetDiskInfo(DISK_INFO &disk_in) {
 	memset(disk_str, 0, disk_length);
 
 	GetLogicalDriveStrings(disk_length, (LPWSTR)disk_str);
+
+	bool is_query = false;
+	if (path.length() > 0) {
+		is_query = true;
+	}
 
 	int disk_type;
 	int si = 0;
@@ -68,6 +65,7 @@ void DiskInfo::GetDiskInfo(DISK_INFO &disk_in) {
 		disk_type = GetDriveType((LPCWSTR)disk_str + i * 4);
 		Wchar_tToString(tempName, disk_str + i * 4);
 
+		if (is_query && tempName[0] != path[0]) continue;
 
 		if (disk_type == DRIVE_FIXED)
 		{
@@ -82,9 +80,12 @@ void DiskInfo::GetDiskInfo(DISK_INFO &disk_in) {
 				tempPartion.freeSize = DoubleToString(tempFree);
 				tempPartion.volume = tempName;
 
-				disk_in.partion.push_back(tempPartion);
+				disk_in.partition.push_back(tempPartion);
 				i64ALL += i64TotalBytes;
 				i64FreeAll += i64FreeBytes;
+			}
+			else {
+				return false;
 			}
 		}
 		si += 4;
@@ -93,4 +94,5 @@ void DiskInfo::GetDiskInfo(DISK_INFO &disk_in) {
 	disk_in.totalSize = DoubleToString(i64ALL / 1024 / 1024 / 1024.0);
 
 	delete[] disk_str;
+	return true;
 }

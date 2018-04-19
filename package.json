@@ -1,0 +1,28 @@
+{
+  "name": "node-disk",
+  "version": "1.0.0",
+  "description": "Get disk information in node.js",
+  "main": "index.js",
+  "typings": "index.d.ts",
+  "gypfile": true,
+  "dependencies": {
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Code2Life/node-disk.git"
+  },
+  "keywords": [
+    "disk",
+    "volume",
+    "usage",
+    "diskinfo",
+    "diskusage",
+    "df"
+  ],
+  "author": "code2life",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Code2Life/node-disk.git/issues"
+  },
+  "homepage": "https://github.com/Code2Life/node-disk"
+}
