@@ -28,7 +28,7 @@ exports.getDisk = function(path, callback) {
 			arg_type === 'function' ? callDiskInfo('', path) : 
 			arg_type === 'string' ? (promise = callDiskInfoPromise(path)) : (param_err = true);
 			break;
-		case 2: arg_type == 'string' && typeof call === 'function' ? 
+		case 2: arg_type == 'string' && typeof callback === 'function' ? 
 			callDiskInfo(path, callback) : (param_err = true);
 		break;
 		default: param_err = true;
